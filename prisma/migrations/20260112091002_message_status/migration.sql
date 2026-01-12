@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `message` ADD COLUMN `status` ENUM('SENT', 'DELIVERED', 'SEEN') NOT NULL DEFAULT 'SENT';

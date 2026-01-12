@@ -27,19 +27,18 @@ export class MessageController {
     reply: FastifyReply
   ) {
     try {
-      const { content, roomId } = req.body as { content: string; roomId: string };
+      const { content, roomId } = req.body as { content: string; roomId: string; status: string };
       const userId = (req as any).userId;
 
       const message = await this.messageService.createMessage(
         content,
         userId,
-        roomId
+        roomId,
+        status
       );
-
-      // 🔥 Emit socket event
+      
       if (this.io) {
         this.io.to(roomId).emit('new-message', message);
-        // this.io.to(roomId).emit('new-message', message)
       }
 
       return reply.code(201).send(message);

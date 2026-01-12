@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { verifyToken } from '../utils/jwt';
+import { verifyToken } from '../utils/jwt.ts';
 
 export const authMiddleware = async (req: FastifyRequest, reply: FastifyReply) => {
   try {

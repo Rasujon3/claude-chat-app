@@ -534,6 +534,24 @@
                 typingDiv.innerText = ''
             })
 
+            socket.on('message-status-update', async () => {
+                const currentRoom = localStorage.getItem('currentRoom');
+                // Check if data exists before parsing
+                if (currentRoom) {
+                    const currentRoomObj = JSON.parse(currentRoom);
+
+                    const response = await fetch(`${API_URL}/api/messages/room/${currentRoomObj.id}`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+
+                    const messages = await response.json();
+                    // renderMessages(messages)
+                    // Load messages
+                    await loadMessages(currentRoomObj.id);
+                }
+            })
+
+
         }
 
         // Load Rooms
@@ -611,6 +629,9 @@
 
             // Load messages
             await loadMessages(room.id);
+
+            socket.emit('seen-messages', room.id)
+
         }
 
         // Load Messages
@@ -642,14 +663,27 @@
 
             const time = new Date(message.createdAt).toLocaleTimeString();
 
+            const isOwn = message.user.id === currentUser.id
+            const statusIcon = isOwn ? getStatusIcon(message.status) : ''
+
             messageDiv.innerHTML = `
                 <div class="message-header">${message.user.username}</div>
                 <div class="message-content">${message.content}</div>
-                <div class="message-time">${time}</div>
+                <div class="message-time">
+                    ${time} 
+                    <span class="status">${statusIcon}</span>
+                </div>
             `;
 
             container.appendChild(messageDiv);
             container.scrollTop = container.scrollHeight;
+        }
+
+        function getStatusIcon(status) {
+            if (status === 'SENT') return '✔'
+            if (status === 'DELIVERED') return '✔✔'
+            if (status === 'SEEN') return '👁'
+            return ''
         }
 
         // Send Message
@@ -714,20 +748,11 @@
         const messageInput = document.getElementById('messageInput');
 
         messageInput.addEventListener('input', (room) => {
-            // currentRoom = room;
-            // console.log('currentRoom', currentRoom);
-            // console.log('currentRoom.id', currentRoom.id);
-            // console.log('room', room);
-            // console.log('room.id', room.id);
-
             // Retrieve the string
             const currentRoom = localStorage.getItem('currentRoom');
             // Check if data exists before parsing
             if (currentRoom) {
                 const currentRoomObj = JSON.parse(currentRoom);
-
-                console.log(currentRoomObj.id);   // Output: 3ad91c0e-6ccd-4fff-a491-855ef7f3e98c
-                console.log(currentRoomObj.name); // Output: Web Chat
 
                 socket.emit('typing', currentRoomObj.id)
 
