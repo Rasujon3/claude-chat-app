@@ -1,11 +1,14 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { MessageService } from './message.service.ts';
+import { Server } from 'socket.io'
 
 export class MessageController {
   private messageService: MessageService;
+  private io: Server
 
-  constructor() {
+  constructor(io: Server) {
     this.messageService = new MessageService();
+    this.io = io;
   }
 
   async getMessagesByRoom(req: FastifyRequest<{ Params: { roomId: string } }>, reply: FastifyReply) {
@@ -32,6 +35,13 @@ export class MessageController {
         userId,
         roomId
       );
+
+      // 🔥 Emit socket event
+      if (this.io) {
+        this.io.to(roomId).emit('new-message', message);
+        // this.io.to(roomId).emit('new-message', message)
+      }
+
       return reply.code(201).send(message);
     } catch (error: any) {
       return reply.code(400).send({ error: error.message });

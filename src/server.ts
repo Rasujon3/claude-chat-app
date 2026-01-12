@@ -29,17 +29,18 @@ const start = async () => {
       return reply.sendFile('index.html')
     })
 
-    // Register routes
-    await app.register(userRoutes, { prefix: '/api/users' });
-    await app.register(roomRoutes, { prefix: '/api/rooms' });
-    await app.register(messageRoutes, { prefix: '/api/messages' });
-
-    await app.listen({ port: Number(config.port), host: '0.0.0.0' });
-
     // Setup Socket.io
     const io = new Server(app.server, {
       cors: { origin: '*' }
     });
+
+    // Register routes
+    await app.register(userRoutes, { prefix: '/api/users' });
+    await app.register(roomRoutes, { prefix: '/api/rooms' });
+    // await app.register(messageRoutes, { prefix: '/api/messages' });
+    await app.register(messageRoutes, { prefix: '/api/messages', io: io });
+
+    await app.listen({ port: Number(config.port), host: '0.0.0.0' });
 
     setupSocketHandlers(io);
 
