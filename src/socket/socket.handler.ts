@@ -7,7 +7,8 @@ export const setupSocketHandlers = (io: Server) => {
   const messageService = new MessageService();
 
 io.use((socket, next) => {
-  const token = socket.handshake.auth.token
+  const token =
+    socket.handshake.auth.token || (socket.handshake.query.token as string)
 
   try {
     const decoded = verifyToken(token)
