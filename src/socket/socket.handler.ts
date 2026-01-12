@@ -5,16 +5,20 @@ import { verifyToken } from '../utils/jwt.ts';
 export const setupSocketHandlers = (io: Server) => {
   const messageService = new MessageService();
 
-  io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    try {
-      const decoded = verifyToken(token);
-      (socket as any).userId = decoded.userId;
-      next();
-    } catch (error) {
-      next(new Error('Authentication error'));
-    }
-  });
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token
+
+  try {
+    const decoded = verifyToken(token)
+
+    ;(socket as any).userId = decoded.userId
+    ;(socket as any).username = decoded.username
+
+    next()
+  } catch (error) {
+    next(new Error('Authentication error'))
+  }
+})
 
   io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
@@ -36,6 +40,24 @@ export const setupSocketHandlers = (io: Server) => {
         socket.emit('error', { message: 'Failed to send message' });
       }
     });
+
+    socket.on('typing', (roomId: string) => {
+      console.log('typing');
+      console.log('socket', socket);
+      // console.log(socket.username);
+      
+      socket.to(roomId).emit('user-typing', {
+        userId: (socket as any).userId,
+        username: (socket as any).username
+      })
+    })
+
+    socket.on('stop-typing', (roomId: string) => {
+      socket.to(roomId).emit('user-stop-typing', {
+        userId: (socket as any).userId
+      })
+    })
+
 
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id);

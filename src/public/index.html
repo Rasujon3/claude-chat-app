@@ -412,6 +412,7 @@
                         Select a room to start chatting
                     </div>
                 </div>
+                <div id="typing"></div>
                 <div class="message-input-area hidden" id="messageInputArea">
                     <input type="text" id="messageInput" placeholder="Type a message...">
                     <button onclick="sendMessage()">Send</button>
@@ -426,6 +427,7 @@
         let currentUser = null;
         let currentRoom = null;
         let authToken = null;
+        let typingDiv = document.getElementById('typing');
 
         // Toggle between login and register forms
         function toggleAuthForm() {
@@ -523,6 +525,15 @@
             socket.on('error', (error) => {
                 console.error('Socket error:', error);
             });
+
+            socket.on('user-typing', data => {
+                typingDiv.innerText = `${data.username} is typing...`
+            })
+
+            socket.on('user-stop-typing', () => {
+                typingDiv.innerText = ''
+            })
+
         }
 
         // Load Rooms
@@ -579,7 +590,11 @@
 
         // Select Room
         async function selectRoom(room) {
+            console.log('room', room);
+
             currentRoom = room;
+            console.log('currentRoom', currentRoom);
+            localStorage.setItem('currentRoom', JSON.stringify(currentRoom));
 
             // Update UI
             document.querySelectorAll('.room-item').forEach(item => {
@@ -694,6 +709,37 @@
             document.getElementById('authError').style.display = 'none';
             document.getElementById('authSuccess').style.display = 'none';
         }
+
+        let typingTimer
+        const messageInput = document.getElementById('messageInput');
+
+        messageInput.addEventListener('input', (room) => {
+            // currentRoom = room;
+            // console.log('currentRoom', currentRoom);
+            // console.log('currentRoom.id', currentRoom.id);
+            // console.log('room', room);
+            // console.log('room.id', room.id);
+
+            // Retrieve the string
+            const currentRoom = localStorage.getItem('currentRoom');
+            // Check if data exists before parsing
+            if (currentRoom) {
+                const currentRoomObj = JSON.parse(currentRoom);
+
+                console.log(currentRoomObj.id);   // Output: 3ad91c0e-6ccd-4fff-a491-855ef7f3e98c
+                console.log(currentRoomObj.name); // Output: Web Chat
+
+                socket.emit('typing', currentRoomObj.id)
+
+                clearTimeout(typingTimer)
+
+                typingTimer = setTimeout(() => {
+                    socket.emit('stop-typing', currentRoomObj.id)
+                }, 1000)
+            }
+
+        })
+
     </script>
 </body>
 
